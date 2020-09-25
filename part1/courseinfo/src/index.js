@@ -62,42 +62,103 @@ import ReactDOM from "react-dom";
 //     </div>
 //   );
 // };
-const Display = (props) => {
-  return (
-    <div>{props.counter}</div>
-  )
-}
+// const Display = (props) => {
+//   return (
+//     <div>{props.counter}</div>
+//   )
+// }
 
-const Button = (props) => {
-  return (
-    <button onClick = {props.handleClick}>
-      {props.text}
-    </button>
-  )
-}
+// const Button = (props) => {
+//   return (
+//     <button onClick = {props.handleClick}>
+//       {props.text}
+//     </button>
+//   )
+// }
 
-const App = () => {
-  const [ counter, setCounter ] = useState(0);
+// const App = () => {
+//   const [ counter, setCounter ] = useState(0);
+//   const [ clicks, setClicks] = useState({
+//     left: 0,
+//     right: 0
+//   });
 
-  const increaseByOne = () => setCounter(counter + 1)
-  const decreaseByOne = () => setCounter(counter - 1)
-  const setToZero = () => setCounter(0)
+//   const handleLeftClick = () => {
+//     const newClicks = {
+//       left: clicks.left + 1,
+//       ...clicks
+//     }
+//     setClicks(newClicks);
+//   }
+
+//   const handleRightClick = () => {
+//     const newClicks = {
+//       ...clicks,
+//       right: clicks.right + 1
+//     }
+//     setClicks(newClicks);
+//   }
+
+
+//   const increaseByOne = () => setCounter(counter + 1)
+//   const decreaseByOne = () => setCounter(counter - 1)
+//   const setToZero = () => setCounter(0)
+
+//   return (
+//     <div>
+//       <Display counter={counter} />
+//       <Button        
+//         handleClick={increaseByOne}        
+//         text='plus'      
+//       />      
+//       <Button        
+//         handleClick={setToZero}        
+//         text='zero'      
+//       />           
+//       <Button        
+//         handleClick={decreaseByOne}        
+//         text='minus'      
+//       />    
+//     </div>
+//   )
+// }
+const History = (props) => {
+  if (props.allClicks.length === 0) {
+    return (
+      <div>
+        the app is used by pressing the buttons
+      </div>
+    )
+  }
 
   return (
     <div>
-      <Display counter={counter} />
-      <Button        
-        handleClick={increaseByOne}        
-        text='plus'      
-      />      
-      <Button        
-        handleClick={setToZero}        
-        text='zero'      
-      />           
-      <Button        
-        handleClick={decreaseByOne}        
-        text='minus'      
-      />    
+      button press history: {props.allClicks.join(' ')}
+    </div>
+  )
+}
+
+const Display = props => <div>{props.value}</div>
+
+const Button = (props) => (
+  <button onClick={props.handleClick}>
+    {props.text}
+  </button>
+)
+
+const App = props => {
+  const [value, setValue] = useState(10)
+
+  const setToValue = newValue => {
+    setValue(newValue)
+  }
+
+  return (
+    <div>
+      <Display value={value} />
+      <Button handleClick={() => setToValue(1000)} text="thousand" />
+      <Button handleClick={() => setToValue(0)} text="reset" />
+      <Button handleClick={() => setToValue(value + 1)} text="increment" />
     </div>
   )
 }
