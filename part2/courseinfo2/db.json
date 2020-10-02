@@ -35,6 +35,12 @@
       "date": "2020-09-29T19:17:29.750Z",
       "important": true,
       "id": 6
+    },
+    {
+      "content": "test",
+      "date": "2020-10-02T09:11:41.272Z",
+      "important": true,
+      "id": 7
     }
   ]
 }
