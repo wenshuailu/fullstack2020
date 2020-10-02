@@ -1,47 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-
-const Filter = (props) => {
-  const {filter, handleFilterChange} = props;
-  return (
-    <div>
-      filter shown with <input value={filter} onChange={handleFilterChange}/>
-    </div>
-  )
-}
-
-const PersonForm = ({handlers, values}) => {
-  const {handleNameChange, handleNumChange, handleSubmit} = handlers;
-  const {newName, newNum} = values;
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        name: <input value={newName} onChange={handleNameChange}/>
-      </div>
-      <div>
-        number: <input value={newNum} onChange={handleNumChange} />
-      </div>
-      <div>
-        <button type="submit">add</button>
-      </div>
-    </form>
-  )
-}
-
-const Persons = ({persons, newFilter}) => {
-  // console.log(persons.filter(p => p.name === 'Ada Lovelace'))
-  return (
-    <ul>
-    {persons 
-    && persons
-        .filter(p => p.name.toLowerCase().includes(newFilter.toLowerCase()))
-        .map(person => {
-        return <li key={person.name}>{person.name} {person.number}</li>
-    })}
-  </ul>
-  )
-}
+// import axios from 'axios'
+import personService from './services/persons'
+import PersonForm from './components/PersonForm'
+import Persons from './components/Persons'
+import Filter from './components/Filter';
 
 const App = () => {
   const [ persons, setPersons ] = useState([]) 
@@ -51,12 +13,11 @@ const App = () => {
 
   useEffect(()=> {
     console.log('effect');
-    axios
-      .get("http://localhost:3001/persons")
-      .then(response => {
-        console.log('response')
-        setPersons(response.data)
-      })
+
+    personService.getAll()
+    .then(initialList => {
+      setPersons(initialList)
+    })
   }, [])
 
   const handleNameChange = (e) => {
@@ -72,9 +33,29 @@ const App = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    
+    const idx = persons.findIndex(p => p.name === newName);
 
-    if (persons.map(person => person.name).includes(newName)) {
-      alert(`${newName} is already added to phonebooks`)
+    if (idx !== -1) {
+      if(window.confirm(`${newName} is already added, replace the old with a new one?`)){
+        const newPerson = {
+          name: newName,
+          number: newNum
+        }
+
+        const tid = persons[idx].id
+
+        personService.update(tid, newPerson)
+        .then(() =>{
+          console.log(persons);
+          const ps = [
+            ...persons.slice(0, idx),
+            newPerson,
+            ...persons.slice(idx + 1)
+          ]
+          setPersons(ps);
+        })
+      }
       return;
     }
 
@@ -83,9 +64,24 @@ const App = () => {
       number: newNum
     }
 
-    setPersons(persons.concat(newPerson))
-    setNewName('')
-    setNewNum('')
+    personService.create(newPerson)
+    .then(returnedPerson => {
+      // console.log(returnedPerson);
+      setPersons(persons.concat(returnedPerson))
+      setNewName('')
+      setNewNum('')
+    })
+  }
+
+
+  const removeItem = person => {
+    if (window.confirm(`Delete ${person.name}`)) {
+      personService.remove(person.id)
+      .then(res => {
+        console.log(res);
+        setPersons(persons.filter(p => p.id !== person.id));
+      })
+    }
   }
 
   return (
@@ -98,7 +94,7 @@ const App = () => {
         values = {{newName, newNum}}
       />
       <h3>Numbers</h3>
-      <Persons persons={persons} newFilter={newFilter}/>
+      <Persons persons={persons} newFilter={newFilter} removeItem={removeItem}/>
       {/* <ul>
         {persons 
         && persons
