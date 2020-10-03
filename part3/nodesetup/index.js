@@ -1,29 +1,53 @@
 const { request, response } = require('express')
 const express = require('express')
+const morgan = require('morgan')
 // const http = require('http')
 const app = express()
 
-app.use(express.json())
+const requestLogger = (request, response, next) => {
+    console.log('Method', request.method)
+    console.log('Path', request.path)
+    console.log('Body', request.body)
+    console.log('---')
+    next()
+}
 
-let notes = [  
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(express.json())
+// app.use(requestLogger)
+
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :result'))
+
+morgan.token('result', (req, res) => JSON.stringify({
+    name: req.body.name,
+    number: req.body.number
+})) 
+
+
+let persons = [  
     {    
         id: 1,    
-        content: "HTML is easy",    
-        date: "2019-05-30T17:30:31.098Z",    
-        important: true  
-    },  
+        name: "Arto Hellas",    
+        number: "040-123456"
+    }, 
     {    
         id: 2,    
-        content: "Browser can execute only Javascript",    
-        date: "2019-05-30T18:39:34.091Z",    
-        important: false  
+        name: "Ada Lovelace",    
+        number: "39-44-563232"
     },  
     {    
         id: 3,    
-        content: "GET and POST are the most important methods of HTTP protocol",    
-        date: "2019-05-30T19:20:14.298Z",    
-        important: true  
-    }
+        name: "Dan Abramov",    
+        number: "12-43-234358"
+    },  
+    {    
+        id: 4,    
+        name: "Mary Poppendick",    
+        number: "39-23-6423122"
+    },  
 ]
 
 // const app = http.createServer((req, res) => {
@@ -34,59 +58,78 @@ app.get('/', (req, res) => {
     res.send('<h1>hello world</h1>')
 })
 
-app.get('/api/notes', (req, res) => {
-    res.json(notes)
+app.get('/api/persons', (req, res) => {
+    res.json(persons)
 })
 
-app.get('/api/notes/:id', (request, response) => {
-    const id = Number(request.params.id);
-    const note = notes.find(note => note.id === id);
+const generateInfo = () => {
+    let result;
 
-    if (note) {
-        response.json(note);
+    result = `<p>Phonebook has info for ${persons.length} people</p>`
+    
+    const date = new Date();
+
+    const dateStr = date.toString();
+
+    return result + dateStr;
+}
+
+app.get('/info', (req, res) => {
+    res.send(generateInfo());
+})
+
+app.get('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id);
+    
+    const p = persons.find(person => person.id === id)
+
+    if (p) {
+        response.json(p);
     } else {
         response.status(404).end()
     }
 })
 
-app.delete('/api/notes/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response) => {
     const id = Number(request.params.id)
-    notes = notes.filter(note => note.id !== id)
+    persons = persons.filter(p => p.id !== id)
 
     response.status(204).end()
 })
 
 const generateId = () => {
-    const maxId = notes.length > 0 
-        ? Math.max(...notes.map(n=>n.id))
-        : 0
-
-    return maxId + 1
+    return Math.floor(Math.random() * 100 + 1)
 }
 
-app.post('/api/notes', (request, response) => {
+app.post('/api/persons', (request, response) => {
 
     const body = request.body
 
-    if (!body.content) {
+    if (body.name && body.number && persons.findIndex(p => p.name === body.name) === -1 ) {
+        const p = {
+            id: generateId(),
+            name: body.name,
+            number: body.number
+        }
+
+        persons = persons.concat(p)
+
+        return response.json(p)
+    }
+
+    if (!body.name || persons.findIndex(p => p.name === body.name) !== -1) {
         return response.status(400).json({
-            error: 'content missing'
+            error: 'name must be unique'
         })
     }
+    
+    response.status(400).json({
+        error: 'number is missing'
+    })
 
-    const note = {
-        content: body.content,
-        important: body.important || false,
-        date: new Date(),
-        id: generateId(),
-    }
-
-    notes = notes.concat(note)
-    // console.log(note)
-
-    response.json(note)
 })
 
+app.use(unknownEndpoint)
 
 const PORT = 3001
 
